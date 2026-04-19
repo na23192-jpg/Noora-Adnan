@@ -1,376 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Nexus AUIS — Academic Resource Hub</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8">
+  <title>Nexus AUIS Hub</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://js.pusher.com/8.0/pusher.min.js"></script>
+  <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
   <style>
-    :root {
-      --navy: #1e3a8a;
-      --navy-dark: #162d6e;
-      --navy-light: #2d4fa8;
-      --slate: #64748b;
-      --slate-light: #94a3b8;
-      --accent: #f59e0b;
-      --accent-light: #fcd34d;
-      --bg: #f8fafc;
-      --white: #ffffff;
-      --border: #e2e8f0;
-      --success: #10b981;
-      --error: #ef4444;
-      --warning: #f59e0b;
-    }
-
-    /* KEEPING ALL YOUR ORIGINAL CSS 
-    */
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: #1e293b; }
-
-    #sidebar {
-      width: 260px; min-height: 100vh; background: var(--navy);
-      position: fixed; left: 0; top: 0; z-index: 100;
-      display: flex; flex-direction: column;
-      transition: transform 0.3s ease;
-    }
-    .sidebar-logo {
-      padding: 28px 24px 20px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-    }
-    .sidebar-logo h1 {
-      font-family: 'Playfair Display', serif;
-      font-size: 22px; color: #fff; letter-spacing: -0.5px;
-    }
-    .sidebar-logo span { color: var(--accent-light); }
-    .sidebar-logo p { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 3px; letter-spacing: 0.5px; text-transform: uppercase; }
-
-    .nav-section { padding: 16px 12px 8px; }
-    .nav-label { font-size: 10px; color: rgba(255,255,255,0.35); letter-spacing: 1px; text-transform: uppercase; padding: 0 12px 8px; }
-    .nav-item {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 14px; border-radius: 8px; cursor: pointer;
-      color: rgba(255,255,255,0.7); font-size: 14px; font-weight: 500;
-      transition: all 0.15s ease; margin-bottom: 2px;
-    }
-    .nav-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
-    .nav-item.active { background: rgba(255,255,255,0.15); color: #fff; }
-    .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
-
-    .sidebar-footer {
-      margin-top: auto; padding: 16px 12px;
-      border-top: 1px solid rgba(255,255,255,0.1);
-    }
-    .user-card {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 12px; border-radius: 8px;
-      background: rgba(255,255,255,0.07); cursor: pointer;
-    }
-    .avatar {
-      width: 34px; height: 34px; border-radius: 50%;
-      background: var(--accent); display: flex; align-items: center;
-      justify-content: center; font-weight: 700; font-size: 14px; color: #1e293b;
-      flex-shrink: 0;
-    }
-    .user-info p { font-size: 13px; color: #fff; font-weight: 600; }
-    .user-info span { font-size: 11px; color: rgba(255,255,255,0.5); }
-
-    #main { margin-left: 260px; min-height: 100vh; padding: 32px; }
-    .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
-    .page-title { font-family: 'Playfair Display', serif; font-size: 28px; color: #0f172a; }
-    .page-sub { font-size: 13px; color: var(--slate); margin-top: 2px; }
-
-    /* Toasts */
-    #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
-    .toast { background: #fff; border-radius: 10px; padding: 14px 18px; box-shadow: 0 8px 30px rgba(0,0,0,0.12); border-left: 4px solid; display: flex; align-items: center; gap: 10px; font-size: 14px; animation: slideIn 0.3s ease; min-width: 280px; }
-    .toast.success { border-color: var(--success); }
-    .toast.error   { border-color: var(--error); }
-    .toast.info    { border-color: var(--navy); }
-    @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-
-    /* Grid & Materials */
-    .materials-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
-    .material-card { background: #fff; border-radius: 12px; border: 1px solid var(--border); padding: 18px; transition: all 0.2s ease; cursor: default; position: relative; overflow: hidden; }
-    .material-card:hover { box-shadow: 0 4px 20px rgba(30,58,138,0.1); border-color: rgba(30,58,138,0.2); }
-
-    /* Chat UI */
-    #chat-page { display: flex; gap: 20px; height: calc(100vh - 160px); }
-    .chat-main { flex: 1; display: flex; flex-direction: column; background: #fff; border-radius: 14px; border: 1px solid var(--border); overflow: hidden; }
-    .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
-    .msg-bubble { display: flex; gap: 10px; align-items: flex-start; }
-    .msg-bubble.mine { flex-direction: row-reverse; }
-    .msg-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--navy); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
-    .msg-bubble.mine .msg-avatar { background: var(--accent); color: #1e293b; }
-    .msg-text { background: var(--bg); padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.5; border: 1px solid var(--border); }
-    .msg-bubble.mine .msg-text { background: var(--navy); color: #fff; border-color: var(--navy); }
-
-    /* Auth Screen */
-    #auth-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 50%, #1d4ed8 100%); }
-    .auth-card { background: #fff; border-radius: 20px; width: 420px; box-shadow: 0 25px 80px rgba(0,0,0,0.3); overflow: hidden; }
-    .auth-header { background: var(--navy); padding: 28px 32px; text-align: center; color: #fff; }
-    .auth-header h2 { font-family: 'Playfair Display', serif; font-size: 26px; }
-    .auth-body { padding: 28px 32px; }
-    .auth-tabs { display: flex; margin-bottom: 24px; border-bottom: 2px solid var(--border); }
-    .auth-tab { flex: 1; text-align: center; padding: 10px; font-size: 14px; cursor: pointer; color: var(--slate); transition: all 0.15s; }
-    .auth-tab.active { color: var(--navy); border-bottom: 2px solid var(--navy); margin-bottom: -2px; }
-
-    /* Buttons */
-    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s ease; }
-    .btn-primary { background: var(--navy); color: #fff; }
-    .form-input { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); font-size: 14px; outline: none; }
-    .hidden { display: none !important; }
+    body { background: #f8fafc; font-family: 'DM Sans', sans-serif; }
+    .btn-navy { background: #1e3a8a; color: white; padding: 10px 20px; border-radius: 8px; }
   </style>
 </head>
-<body>
+<body class="p-8">
 
-<div id="toast-container"></div>
-
-<div id="auth-screen">
-  <div class="auth-card">
-    <div class="auth-header">
-      <h2>Nexus <span>AUIS</span></h2>
-      <p>American University of Iraq, Sulaimani</p>
-    </div>
-    <div class="auth-body">
-      <div class="auth-tabs">
-        <div class="auth-tab active" onclick="switchAuthTab('login')">Sign In</div>
-        <div class="auth-tab" onclick="switchAuthTab('register')">Register</div>
-      </div>
-
-      <div id="login-form">
-        <div class="form-group mb-4">
-          <label class="block text-sm font-medium mb-1">University Email</label>
-          <input id="login-email" class="form-input" type="email" placeholder="you@auis.edu.krd" />
-        </div>
-        <div class="form-group mb-4">
-          <label class="block text-sm font-medium mb-1">Password</label>
-          <input id="login-password" class="form-input" type="password" placeholder="••••••••" />
-        </div>
-        <button class="btn btn-primary w-full justify-center py-3" onclick="login()">Sign In</button>
-      </div>
-
-      <div id="register-form" class="hidden">
-        <div class="form-group mb-3">
-          <label class="block text-sm font-medium mb-1">Full Name</label>
-          <input id="reg-name" class="form-input" type="text" placeholder="Your name" />
-        </div>
-        <div class="form-group mb-3">
-          <label class="block text-sm font-medium mb-1">University Email</label>
-          <input id="reg-email" class="form-input" type="email" placeholder="you@auis.edu.krd" />
-        </div>
-        <div class="form-group mb-3">
-          <label class="block text-sm font-medium mb-1">Password</label>
-          <input id="reg-password" class="form-input" type="password" />
-        </div>
-        <div class="form-group mb-4">
-          <label class="block text-sm font-medium mb-1">Major</label>
-          <select id="reg-major" class="form-input">
-            <option>IT</option><option>SE</option><option>CS</option><option>Other</option>
-          </select>
-        </div>
-        <button class="btn btn-primary w-full justify-center py-3" onclick="register()">Create Account</button>
-      </div>
-    </div>
+  <div id="auth" class="max-w-md mx-auto bg-white p-8 rounded-xl shadow-lg">
+    <h2 class="text-2xl font-bold mb-4">Login to Nexus</h2>
+    <input id="email" type="email" placeholder="Email" class="w-full border p-2 mb-4 rounded">
+    <input id="pass" type="password" placeholder="Password" class="w-full border p-2 mb-4 rounded">
+    <button onclick="login()" class="btn-navy w-full">Sign In</button>
   </div>
-</div>
 
-<div id="app" class="hidden">
-  <div id="sidebar">
-    <div class="sidebar-logo"><h1>Nexus <span>AUIS</span></h1></div>
-    <div class="nav-section">
-      <div class="nav-item active" onclick="navigate('dashboard')">🏠 Dashboard</div>
-      <div class="nav-item" onclick="navigate('chat')">💬 Live Chat</div>
-      <div class="nav-item" onclick="navigate('upload')">⬆️ Upload</div>
-      <div class="nav-item" onclick="logout()" style="margin-top: 20px; color: #f87171;">Logout</div>
+  <div id="app" class="hidden grid grid-cols-12 gap-8">
+    <div class="col-span-4 bg-white p-6 rounded-xl shadow">
+      <h3 class="font-bold mb-4">Chat</h3>
+      <div id="messages" class="h-64 overflow-y-auto mb-4 border-b"></div>
+      <input id="msg-input" class="w-full border p-2 rounded" placeholder="Type...">
     </div>
-    <div class="sidebar-footer">
-      <div class="user-card">
-        <div class="avatar" id="sidebar-avatar">U</div>
-        <div class="user-info">
-          <p id="sidebar-name">User</p>
-          <span id="sidebar-major">IT</span>
-        </div>
-      </div>
+    
+    <div class="col-span-8 bg-white p-6 rounded-xl shadow">
+      <h3 class="font-bold mb-4">Materials</h3>
+      <div id="material-list" class="grid grid-cols-2 gap-4"></div>
     </div>
   </div>
 
-  <div id="main">
-    <div id="page-dashboard">
-      <div class="topbar">
-        <h1 class="page-title">Dashboard</h1>
-      </div>
-      <div id="dashboard-recent" class="materials-grid"></div>
-    </div>
+  <script>
+    const API = "https://noora-adnan.vercel.app/api";
+    let user = null;
 
-    <div id="page-chat" class="hidden">
-      <div class="topbar">
-        <h1 class="page-title">Live Chat</h1>
-      </div>
-      <div id="chat-page">
-        <div class="chat-main">
-          <div class="chat-messages" id="chat-messages"></div>
-          <div class="p-4 border-top flex gap-2">
-            <input id="chat-input" class="form-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendMessage()" />
-            <button class="btn btn-primary" onclick="sendMessage()">Send</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div id="page-upload" class="hidden">
-      <div class="topbar">
-        <h1 class="page-title">Upload Resource</h1>
-      </div>
-      <div class="bg-white p-6 rounded-xl border max-w-lg">
-        <div class="form-group mb-4">
-          <label class="block text-sm font-medium mb-1">Title</label>
-          <input id="upload-title" class="form-input" type="text" />
-        </div>
-        <input type="file" id="file-input" class="mb-6 block w-full text-sm text-slate-500" />
-        <button class="btn btn-primary w-full justify-center" onclick="uploadFile()">Upload to Cloud</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-  // ─── UPDATED CONFIGURATION ──────────────────────────────────────────────────
-  const API_URL = "https://noora-adnan.vercel.app/"; 
-  // IMPORTANT: Replace with your actual Pusher Key from dashboard
-  const PUSHER_KEY = "c13e5901d85bfa53ba80"; 
-  const PUSHER_CLUSTER = "mt1";
-
-  let currentUser = JSON.parse(localStorage.getItem("nexus_user"));
-  let token = localStorage.getItem("nexus_token");
-
-  // ─── INITIALIZE PUSHER (REPLACING SOCKET.IO) ────────────────────────────────
-  const pusher = new Pusher(PUSHER_KEY, { cluster: PUSHER_CLUSTER });
-  const channel = pusher.subscribe('general');
-
-  // Listen for messages from the Cloud
-  channel.bind('new-message', function(data) {
-    appendMessage(data);
-  });
-
-  // ─── AUTH LOGIC ─────────────────────────────────────────────────────────────
-  async function login() {
-    const email = document.getElementById("login-email").value;
-    const password = document.getElementById("login-password").value;
-
-    try {
-      const res = await fetch(`${API_URL}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+    async function login() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('pass').value;
+      const res = await fetch(`${API}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
       const data = await res.json();
       if (res.ok) {
-        localStorage.setItem("nexus_token", data.token);
-        localStorage.setItem("nexus_user", JSON.stringify(data.user));
-        window.location.reload();
-      } else { showToast(data.error, "error"); }
-    } catch (err) { showToast("Connection failed", "error"); }
-  }
-
-  function logout() {
-    localStorage.clear();
-    window.location.reload();
-  }
-
-  // ─── CHAT LOGIC (PUSHER VERSION) ───────────────────────────────────────────
-  async function sendMessage() {
-    const input = document.getElementById("chat-input");
-    const text = input.value.trim();
-    if (!text || !currentUser) return;
-
-    // Send to Backend API
-   // Send to Backend API
-  await fetch(`${API_URL}/api/chat/send`, {
-    method: "POST",
-    headers: { 
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}` // Add this line!
-    },
-    body: JSON.stringify({
-      text,
-      room: "general"
-    })
-  });
-
-  function appendMessage(data) {
-    const container = document.getElementById("chat-messages");
-    const isMine = currentUser && data.userName === currentUser.name;
-    const html = `
-      <div class="msg-bubble ${isMine ? 'mine' : ''}">
-        <div class="msg-avatar">${data.userName[0]}</div>
-        <div class="msg-content">
-          <div class="msg-meta">${data.userName}</div>
-          <div class="msg-text">${data.text}</div>
-        </div>
-      </div>
-    `;
-    container.insertAdjacentHTML('beforeend', html);
-    container.scrollTop = container.scrollHeight;
-  }
-
-  // ─── UPLOAD LOGIC (CLOUDINARY VERSION) ──────────────────────────────────────
-  async function uploadFile() {
-    const fileInput = document.getElementById("file-input");
-    const title = document.getElementById("upload-title").value;
-    if (!fileInput.files[0]) return showToast("Select a file", "error");
-
-    const formData = new FormData();
-    formData.append("file", fileInput.files[0]);
-    formData.append("title", title);
-    formData.append("userId", currentUser.id);
-
-    showToast("Uploading to Cloudinary...", "info");
-
-    const res = await fetch(`${API_URL}/api/materials`, {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${token}` },
-      body: formData
-    });
-
-    if (res.ok) {
-      showToast("Upload Successful!", "success");
-      navigate('dashboard');
-    } else {
-      showToast("Upload Failed", "error");
+        user = data.user;
+        document.getElementById('auth').classList.add('hidden');
+        document.getElementById('app').classList.remove('hidden');
+        initChat();
+        loadMaterials();
+      }
     }
-  }
 
-  // ─── UTILS ──────────────────────────────────────────────────────────────────
-  function navigate(page) {
-    ["page-dashboard", "page-chat", "page-upload"].forEach(p => document.getElementById(p).classList.add("hidden"));
-    document.getElementById("page-" + page).classList.remove("hidden");
-  }
+    function initChat() {
+      const pusher = new Pusher('c13e5901d85bfa53ba80', { cluster: 'mt1' });
+      const channel = pusher.subscribe('general');
+      channel.bind('new-message', data => {
+        document.getElementById('messages').innerHTML += `<p><b>${data.userName}:</b> ${data.text}</p>`;
+      });
+    }
 
-  function switchAuthTab(tab) {
-    document.getElementById("login-form").classList.toggle("hidden", tab === 'register');
-    document.getElementById("register-form").classList.toggle("hidden", tab === 'login');
-    document.querySelectorAll(".auth-tab").forEach(t => t.classList.toggle("active", t.innerText.toLowerCase().includes(tab)));
-  }
-
-  function showToast(msg, type) {
-    const container = document.getElementById("toast-container");
-    const t = document.createElement("div");
-    t.className = `toast ${type}`;
-    t.innerText = msg;
-    container.appendChild(t);
-    setTimeout(() => t.remove(), 3000);
-  }
-
-  // Initial Check
-  if (token && currentUser) {
-    document.getElementById("auth-screen").classList.add("hidden");
-    document.getElementById("app").classList.remove("hidden");
-    document.getElementById("sidebar-name").innerText = currentUser.name;
-    document.getElementById("sidebar-major").innerText = currentUser.major;
-    document.getElementById("sidebar-avatar").innerText = currentUser.name[0];
-  }
-</script>
+    async function loadMaterials() {
+      const res = await fetch(`${API}/materials`);
+      const data = await res.json();
+      const list = document.getElementById('material-list');
+      data.materials.forEach(m => {
+        list.innerHTML += `<div class="border p-4 rounded"><b>${m.title}</b><br><a href="${m.fileUrl}" class="text-blue-500">Download</a></div>`;
+      });
+    }
+  </script>
 </body>
 </html>
