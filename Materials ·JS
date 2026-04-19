@@ -1,0 +1,131 @@
+const { connectDB, Material, User } = require("./_db");
+const { authMiddleware, cors, err }  = require("./_auth");
+
+module.exports = async (req, res) => {
+  cors(res);
+  if (req.method === "OPTIONS") return res.status(200).end();
+  await connectDB();
+
+  const url    = req.url.split("?")[0];
+  const parts  = url.replace(/^\/api\/materials\/?/, "").split("/");
+  const id     = parts[0] || null;
+  const action = parts[1] || null;
+
+  // ── GET /api/materials  (list with filters) ──────────────────────────────────
+  if (!id && req.method === "GET") {
+    const { major, type, search, page = 1, limit = 12 } = req.query;
+    const filter = {};
+    if (major)  filter.major = major;
+    if (type)   filter.type  = type;
+    if (search) filter.$or   = [
+      { title:       { $regex: search, $options: "i" } },
+      { description: { $regex: search, $options: "i" } }
+    ];
+    const total     = await Material.countDocuments(filter);
+    const materials = await Material.find(filter)
+      .populate("uploader", "name major")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
+    return res.json({ materials, total, pages: Math.ceil(total / limit) });
+  }
+
+  // ── POST /api/materials  (save after UploadThing upload) ────────────────────
+  if (!id && req.method === "POST") {
+    try {
+      const user = await authMiddleware(req);
+      const { title, description, type, major, fileUrl, fileKey, originalName, size } = req.body;
+      if (!title || !fileUrl || !fileKey) return err(res, "title, fileUrl and fileKey are required");
+      const material = await Material.create({
+        title, description, type: type || "Other",
+        major: major || user.major || "Other",
+        fileUrl, fileKey, originalName, size,
+        uploader: user._id
+      });
+      await material.populate("uploader", "name major");
+      return res.status(201).json({ material });
+    } catch (e) { return err(res, e.message, 401); }
+  }
+
+  // ── GET /api/materials/mine ───────────────────────────────────────────────────
+  if (id === "mine" && req.method === "GET") {
+    try {
+      const user      = await authMiddleware(req);
+      const materials = await Material.find({ uploader: user._id }).sort({ createdAt: -1 });
+      return res.json({ materials });
+    } catch (e) { return err(res, e.message, 401); }
+  }
+
+  // ── PUT /api/materials/:id ────────────────────────────────────────────────────
+  if (id && !action && req.method === "PUT") {
+    try {
+      const user     = await authMiddleware(req);
+      const material = await Material.findById(id);
+      if (!material) return err(res, "Not found", 404);
+      if (material.uploader.toString() !== user._id.toString())
+        return err(res, "Not authorized", 403);
+      const { title, description, type, major } = req.body;
+      if (title)       material.title       = title;
+      if (description !== undefined) material.description = description;
+      if (type)        material.type        = type;
+      if (major)       material.major       = major;
+      await material.save();
+      return res.json({ material });
+    } catch (e) { return err(res, e.message, 401); }
+  }
+
+  // ── DELETE /api/materials/:id ─────────────────────────────────────────────────
+  if (id && !action && req.method === "DELETE") {
+    try {
+      const user     = await authMiddleware(req);
+      const material = await Material.findById(id);
+      if (!material) return err(res, "Not found", 404);
+      if (material.uploader.toString() !== user._id.toString())
+        return err(res, "Not authorized", 403);
+      await material.deleteOne();
+      return res.json({ message: "Deleted" });
+    } catch (e) { return err(res, e.message, 401); }
+  }
+
+  // ── POST /api/materials/:id/rate ──────────────────────────────────────────────
+  if (id && action === "rate" && req.method === "POST") {
+    try {
+      const user     = await authMiddleware(req);
+      const { value } = req.body;
+      if (!value || value < 1 || value > 5) return err(res, "Rating must be 1-5");
+      const material = await Material.findById(id);
+      if (!material) return err(res, "Not found", 404);
+      const existing = material.ratings.find(r => r.user.toString() === user._id.toString());
+      if (existing) existing.value = value;
+      else material.ratings.push({ user: user._id, value });
+      await material.save();
+      const avg = material.ratings.reduce((a, r) => a + r.value, 0) / material.ratings.length;
+      return res.json({ averageRating: avg.toFixed(1), totalRatings: material.ratings.length });
+    } catch (e) { return err(res, e.message, 401); }
+  }
+
+  // ── POST /api/materials/:id/comments ─────────────────────────────────────────
+  if (id && action === "comments" && req.method === "POST") {
+    try {
+      const user     = await authMiddleware(req);
+      const { text, parentId } = req.body;
+      if (!text) return err(res, "Text required");
+      const material = await Material.findById(id);
+      if (!material) return err(res, "Not found", 404);
+      material.comments.push({ user: user._id, userName: user.name, text, parent: parentId || null });
+      await material.save();
+      return res.json({ comments: material.comments });
+    } catch (e) { return err(res, e.message, 401); }
+  }
+
+  // ── POST /api/materials/:id/download  (increment counter) ────────────────────
+  if (id && action === "download" && req.method === "POST") {
+    try {
+      const material = await Material.findByIdAndUpdate(id, { $inc: { downloadCount: 1 } }, { new: true });
+      if (!material) return err(res, "Not found", 404);
+      return res.json({ fileUrl: material.fileUrl, originalName: material.originalName });
+    } catch (e) { return err(res, e.message); }
+  }
+
+  err(res, "Not found", 404);
+};
