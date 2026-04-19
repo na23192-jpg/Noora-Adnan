@@ -5,191 +5,775 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Nexus AUIS — Academic Resource Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://js.pusher.com/8.0.1/pusher.min.js"></script>
-  
   <style>
-    /* YOUR ORIGINAL INTERFACE - DO NOT TOUCH */
     :root {
-      --navy: #1e3a8a; --navy-dark: #162d6e; --navy-light: #2d4fa8;
-      --slate: #64748b; --accent: #f59e0b; --bg: #f8fafc; --white: #ffffff;
-      --border: #e2e8f0; --success: #10b981; --error: #ef4444;
+      --navy:#1e3a8a; --navy-d:#162d6e; --navy-l:#2d4fa8;
+      --slate:#64748b; --slate-l:#94a3b8;
+      --accent:#f59e0b; --accent-l:#fcd34d;
+      --bg:#f8fafc; --white:#fff; --border:#e2e8f0;
+      --ok:#10b981; --bad:#ef4444;
     }
-    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: #1e293b; }
-    #sidebar { width: 260px; min-height: 100vh; background: var(--navy); position: fixed; left: 0; top: 0; z-index: 100; display: flex; flex-direction: column; }
-    #main { margin-left: 260px; min-height: 100vh; padding: 32px; }
-    .hidden { display: none !important; }
-    .nav-item { padding: 10px 14px; cursor: pointer; color: rgba(255,255,255,0.7); display: flex; align-items: center; gap: 10px; border-radius: 8px; }
-    .nav-item.active { background: rgba(255,255,255,0.15); color: #fff; }
-    .auth-card { background: #fff; border-radius: 20px; width: 420px; box-shadow: 0 25px 80px rgba(0,0,0,0.3); overflow: hidden; }
-    .material-card { background: #fff; border-radius: 12px; border: 1px solid var(--border); padding: 18px; }
-    /* (Adding your Toast and Chat styles back in) */
-    #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
-    .toast { padding: 14px 18px; border-radius: 10px; background: white; box-shadow: 0 8px 30px rgba(0,0,0,0.12); border-left: 4px solid; animation: slideIn 0.3s ease; }
-    .toast.success { border-color: var(--success); }
-    .toast.error { border-color: var(--error); }
-    @keyframes slideIn { from { transform: translateX(120%); } to { transform: translateX(0); } }
-    .msg-bubble { display: flex; gap: 10px; margin-bottom: 12px; }
-    .msg-bubble.mine { flex-direction: row-reverse; }
-    .msg-text { background: #f1f5f9; padding: 10px; border-radius: 12px; max-width: 70%; }
-    .msg-bubble.mine .msg-text { background: var(--navy); color: white; }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:#1e293b}
+
+    /* sidebar */
+    #sidebar{width:252px;min-height:100vh;background:var(--navy);position:fixed;left:0;top:0;z-index:100;display:flex;flex-direction:column}
+    .s-logo{padding:26px 22px 18px;border-bottom:1px solid rgba(255,255,255,.1)}
+    .s-logo h1{font-family:'Playfair Display',serif;font-size:21px;color:#fff}
+    .s-logo h1 span{color:var(--accent-l)}
+    .s-logo p{font-size:11px;color:rgba(255,255,255,.4);margin-top:2px;letter-spacing:.5px;text-transform:uppercase}
+    .nav-sec{padding:14px 10px 6px}
+    .nav-lbl{font-size:10px;color:rgba(255,255,255,.3);letter-spacing:1px;text-transform:uppercase;padding:0 12px 7px}
+    .nav-i{display:flex;align-items:center;gap:9px;padding:9px 13px;border-radius:8px;cursor:pointer;color:rgba(255,255,255,.65);font-size:14px;font-weight:500;transition:all .15s;margin-bottom:2px}
+    .nav-i:hover{background:rgba(255,255,255,.08);color:#fff}
+    .nav-i.active{background:rgba(255,255,255,.14);color:#fff}
+    .s-foot{margin-top:auto;padding:14px 10px;border-top:1px solid rgba(255,255,255,.1)}
+    .u-card{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:8px;background:rgba(255,255,255,.07);cursor:pointer}
+    .ava{width:33px;height:33px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#1e293b;flex-shrink:0}
+    .u-info p{font-size:13px;color:#fff;font-weight:600}
+    .u-info span{font-size:11px;color:rgba(255,255,255,.45)}
+
+    /* main */
+    #main{margin-left:252px;min-height:100vh;padding:30px}
+
+    /* topbar */
+    .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+    .pg-title{font-family:'Playfair Display',serif;font-size:27px;color:#0f172a}
+    .pg-sub{font-size:13px;color:var(--slate);margin-top:2px}
+
+    /* toasts */
+    #tc{position:fixed;top:18px;right:18px;z-index:9999;display:flex;flex-direction:column;gap:7px}
+    .toast{background:#fff;border-radius:10px;padding:13px 16px;box-shadow:0 8px 28px rgba(0,0,0,.12);border-left:4px solid;display:flex;align-items:center;gap:9px;font-size:13px;min-width:270px;animation:sli .3s ease}
+    .toast.ok{border-color:var(--ok)}.toast.bad{border-color:var(--bad)}.toast.info{border-color:var(--navy)}
+    @keyframes sli{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+    @keyframes fout{to{opacity:0;transform:translateX(110%)}}
+
+    /* cards */
+    .card{background:#fff;border-radius:14px;border:1px solid var(--border);overflow:hidden}
+    .card-hdr{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+    .card-hdr h3{font-size:15px;font-weight:600;color:#0f172a}
+    .card-body{padding:18px 20px}
+
+    /* material cards */
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+    .mc{background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px;transition:all .2s;position:relative;overflow:hidden}
+    .mc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--navy),var(--navy-l));opacity:0;transition:opacity .2s}
+    .mc:hover{box-shadow:0 4px 18px rgba(30,58,138,.1);border-color:rgba(30,58,138,.2)}
+    .mc:hover::before{opacity:1}
+    .mc-title{font-size:14px;font-weight:600;color:#0f172a;margin-bottom:5px;line-height:1.4}
+    .mc-desc{font-size:12px;color:var(--slate);margin-bottom:10px;line-height:1.5}
+    .mc-meta{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+    .badge{font-size:11px;font-weight:500;padding:2px 7px;border-radius:20px;display:inline-flex;align-items:center;gap:3px}
+    .bm{background:#dbeafe;color:#1d4ed8}.bt{background:#f0fdf4;color:#15803d}.bd{background:#fef9c3;color:#854d0e}
+    .mc-foot{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--border)}
+    .mc-by{font-size:11px;color:var(--slate-l)}
+
+    /* buttons */
+    .btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;font-family:'DM Sans',sans-serif}
+    .btn-p{background:var(--navy);color:#fff}.btn-p:hover{background:var(--navy-l)}
+    .btn-o{background:transparent;color:var(--navy);border:1px solid var(--navy)}.btn-o:hover{background:var(--navy);color:#fff}
+    .btn-sm{padding:4px 9px;font-size:11px;border-radius:6px}
+    .btn-d{background:#fee2e2;color:var(--bad)}.btn-d:hover{background:var(--bad);color:#fff}
+    .btn-ic{padding:5px}
+
+    /* stats */
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+    .sc{background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px 18px;display:flex;align-items:center;gap:12px}
+    .si{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px}
+    .si.b{background:#dbeafe}.si.g{background:#dcfce7}.si.a{background:#fef9c3}.si.p{background:#ede9fe}
+    .sv{font-size:22px;font-weight:700;color:#0f172a;line-height:1}
+    .sl{font-size:12px;color:var(--slate);margin-top:2px}
+
+    /* filters */
+    .frow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+    .sbox{flex:1;min-width:200px;position:relative}
+    .sbox input{width:100%;padding:9px 12px 9px 36px;border-radius:8px;border:1px solid var(--border);font-size:13px;background:#fff;font-family:'DM Sans',sans-serif;color:#0f172a;outline:none;transition:border-color .15s}
+    .sbox input:focus{border-color:var(--navy)}
+    .sbox .si2{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--slate-l);font-size:15px}
+    select.fsel{padding:9px 12px;border-radius:8px;border:1px solid var(--border);font-size:13px;background:#fff;color:#0f172a;outline:none;cursor:pointer;font-family:'DM Sans',sans-serif}
+    select.fsel:focus{border-color:var(--navy)}
+
+    /* modal */
+    .mo{position:fixed;inset:0;background:rgba(15,23,42,.5);backdrop-filter:blur(4px);z-index:500;display:none;align-items:center;justify-content:center}
+    .mo.open{display:flex}
+    .md{background:#fff;border-radius:16px;width:90%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2);animation:mi .25s ease}
+    .md.wide{max-width:640px}
+    @keyframes mi{from{opacity:0;transform:translateY(-18px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+    .md-hdr{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+    .md-hdr h2{font-family:'Playfair Display',serif;font-size:19px}
+    .md-body{padding:22px}
+    .xbtn{background:none;border:none;font-size:19px;cursor:pointer;color:var(--slate);line-height:1}
+
+    /* forms */
+    .fg{margin-bottom:14px}
+    .fl{display:block;font-size:12px;font-weight:500;color:#374151;margin-bottom:5px}
+    .fi{width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);font-size:13px;outline:none;transition:border-color .15s;color:#0f172a;font-family:'DM Sans',sans-serif}
+    .fi:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(30,58,138,.07)}
+    textarea.fi{resize:vertical;min-height:75px}
+
+    /* drop zone */
+    .dz{border:2px dashed var(--border);border-radius:12px;padding:28px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)}
+    .dz:hover,.dz.over{border-color:var(--navy);background:#eff6ff}
+    .dz p{font-size:13px;color:var(--slate)}
+    .dz strong{color:var(--navy)}
+
+    /* upload progress */
+    .ubar{display:none;margin-top:10px}
+    .pb{width:100%;height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+    .pf{height:100%;background:linear-gradient(90deg,var(--navy),var(--navy-l));border-radius:3px;transition:width .3s;width:0%}
+
+    /* chat */
+    #chat-wrap{display:flex;gap:16px;height:calc(100vh - 155px)}
+    .chat-box{flex:1;display:flex;flex-direction:column;background:#fff;border-radius:14px;border:1px solid var(--border);overflow:hidden}
+    .chat-hdr{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+    .chat-hdr h3{font-size:15px;font-weight:600}
+    .ob{font-size:12px;background:#dcfce7;color:#166534;padding:3px 9px;border-radius:20px}
+    .msgs{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:10px}
+    .mb{display:flex;gap:8px;align-items:flex-start}
+    .mb.me{flex-direction:row-reverse}
+    .ma{width:30px;height:30px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+    .mb.me .ma{background:var(--accent);color:#1e293b}
+    .mc2{max-width:68%}
+    .mm{font-size:11px;color:var(--slate-l);margin-bottom:3px}
+    .mb.me .mm{text-align:right}
+    .mt2{background:var(--bg);padding:9px 12px;border-radius:10px;font-size:13px;line-height:1.5;border:1px solid var(--border)}
+    .mb.me .mt2{background:var(--navy);color:#fff;border-color:var(--navy)}
+    .cin{padding:14px 18px;border-top:1px solid var(--border);display:flex;gap:8px}
+    .cin input{flex:1;padding:9px 12px;border-radius:8px;border:1px solid var(--border);font-size:13px;outline:none;font-family:'DM Sans',sans-serif}
+    .cin input:focus{border-color:var(--navy)}
+
+    /* stars */
+    .stars{display:flex;gap:1px}
+    .star{font-size:20px;cursor:pointer;color:#cbd5e1;transition:color .1s;user-select:none}
+    .star.on{color:var(--accent)}
+
+    /* auth */
+    #auth{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--navy-d) 0%,var(--navy) 55%,#1d4ed8 100%)}
+    .ac{background:#fff;border-radius:20px;width:410px;box-shadow:0 25px 80px rgba(0,0,0,.3);overflow:hidden}
+    .ah{background:var(--navy);padding:26px 30px;text-align:center;color:#fff}
+    .ah h2{font-family:'Playfair Display',serif;font-size:25px;margin-bottom:3px}
+    .ah h2 span{color:var(--accent-l)}
+    .ah p{font-size:12px;color:rgba(255,255,255,.55);margin-top:3px}
+    .ab{padding:26px 30px}
+    .atabs{display:flex;margin-bottom:22px;border-bottom:2px solid var(--border)}
+    .atab{flex:1;text-align:center;padding:9px;font-size:13px;font-weight:500;cursor:pointer;color:var(--slate);transition:all .15s}
+    .atab.active{color:var(--navy);border-bottom:2px solid var(--navy);margin-bottom:-2px}
+
+    /* misc */
+    .hidden{display:none!important}
+    .es{text-align:center;padding:44px 20px;color:var(--slate)}
+    .es .ei{font-size:44px;margin-bottom:10px}
+    .spin{width:28px;height:28px;border:2px solid rgba(30,58,138,.15);border-top-color:var(--navy);border-radius:50%;animation:sp .6s linear infinite;margin:0 auto}
+    @keyframes sp{to{transform:rotate(360deg)}}
+
+    /* comment */
+    .cmt{padding:10px;background:var(--bg);border-radius:8px;margin-bottom:7px}
+    .chu{font-size:12px;font-weight:600;color:var(--navy)}
+    .cht{font-size:13px;color:#374151;line-height:1.5;margin-top:3px}
+    .rep{margin-left:20px;border-left:2px solid var(--border);padding-left:10px;margin-top:6px}
   </style>
 </head>
 <body>
 
-<div id="toast-container"></div>
+<div id="tc"></div>
 
-<div id="auth-screen" class="min-h-screen flex items-center justify-center bg-slate-900">
-  <div class="auth-card">
-    <div class="p-8 text-center bg-blue-900 text-white">
-      <h2 class="text-2xl font-bold">Nexus <span class="text-amber-400">AUIS</span></h2>
+<!-- ══ AUTH ══ -->
+<div id="auth">
+  <div class="ac">
+    <div class="ah">
+      <h2>Nexus <span>AUIS</span></h2>
+      <p>American University of Iraq, Sulaimani</p>
     </div>
-    <div class="p-8">
-      <div class="flex border-b-2 mb-6">
-        <button id="btn-login-tab" class="flex-1 py-2 font-bold border-b-2 border-blue-900" onclick="switchTab('login')">Login</button>
-        <button id="btn-reg-tab" class="flex-1 py-2 text-slate-400" onclick="switchTab('register')">Register</button>
+    <div class="ab">
+      <div class="atabs">
+        <div class="atab active" onclick="switchTab('login')">Sign In</div>
+        <div class="atab" onclick="switchTab('register')">Register</div>
       </div>
-      <div id="login-form">
-        <input id="l-email" type="email" placeholder="Email" class="w-full p-3 border rounded mb-4">
-        <input id="l-pass" type="password" placeholder="Password" class="w-full p-3 border rounded mb-4">
-        <button onclick="login()" class="w-full bg-blue-900 text-white py-3 rounded font-bold hover:bg-blue-800">Sign In</button>
+      <div id="lf">
+        <div class="fg"><label class="fl">University Email</label>
+          <input id="le" class="fi" type="email" placeholder="you@auis.edu.krd" /></div>
+        <div class="fg"><label class="fl">Password</label>
+          <input id="lp" class="fi" type="password" placeholder="••••••••" /></div>
+        <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px" onclick="login()">Sign In</button>
       </div>
-      <div id="register-form" class="hidden">
-        <input id="r-name" type="text" placeholder="Full Name" class="w-full p-3 border rounded mb-4">
-        <input id="r-email" type="email" placeholder="Email" class="w-full p-3 border rounded mb-4">
-        <input id="r-pass" type="password" placeholder="Password" class="w-full p-3 border rounded mb-4">
-        <select id="r-major" class="w-full p-3 border rounded mb-4"><option>IT</option><option>Business</option><option>English</option></select>
-        <button onclick="register()" class="w-full bg-blue-900 text-white py-3 rounded font-bold hover:bg-blue-800">Register</button>
+      <div id="rf" class="hidden">
+        <div class="fg"><label class="fl">Full Name</label>
+          <input id="rn" class="fi" type="text" placeholder="Your full name" /></div>
+        <div class="fg"><label class="fl">University Email</label>
+          <input id="re" class="fi" type="email" placeholder="you@auis.edu.krd" /></div>
+        <div class="fg"><label class="fl">Password</label>
+          <input id="rp" class="fi" type="password" placeholder="Min 6 characters" /></div>
+        <div class="fg"><label class="fl">Major / Department</label>
+          <select id="rm" class="fi">
+            <option value="">Select major</option>
+            <option>IT</option><option>SE</option><option>CS</option>
+            <option>Business</option><option>English</option><option>Law</option><option>Other</option>
+          </select></div>
+        <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px" onclick="register()">Create Account</button>
       </div>
     </div>
   </div>
 </div>
 
+<!-- ══ APP ══ -->
 <div id="app" class="hidden">
   <div id="sidebar">
-    <div class="p-6 border-b border-white/10">
-      <h1 class="text-white text-xl font-bold">Nexus <span class="text-amber-400">AUIS</span></h1>
+    <div class="s-logo">
+      <h1>Nexus <span>AUIS</span></h1>
+      <p>Resource Hub</p>
     </div>
-    <nav class="p-4 space-y-2">
-      <div onclick="showPage('dashboard')" class="nav-item active" id="nav-dashboard">🏠 Dashboard</div>
-      <div onclick="showPage('upload')" class="nav-item" id="nav-upload">⬆️ Upload</div>
-      <div onclick="showPage('chat')" class="nav-item" id="nav-chat">💬 Live Chat</div>
-      <div onclick="logout()" class="nav-item text-red-300 mt-10">↩ Logout</div>
-    </nav>
+    <div class="nav-sec">
+      <div class="nav-lbl">Navigation</div>
+      <div class="nav-i active" onclick="go('dashboard')"><span>🏠</span> Dashboard</div>
+      <div class="nav-i" onclick="go('hub')"><span>📦</span> Download Hub</div>
+      <div class="nav-i" onclick="go('upload')"><span>⬆️</span> Upload Resource</div>
+      <div class="nav-i" onclick="go('mine')"><span>📂</span> My Uploads</div>
+      <div class="nav-i" onclick="go('bookmarks')"><span>🔖</span> Bookmarks</div>
+      <div class="nav-i" onclick="go('chat')"><span>💬</span> Live Chat</div>
+    </div>
+    <div class="s-foot">
+      <div class="u-card" onclick="logout()">
+        <div class="ava" id="sava">?</div>
+        <div class="u-info"><p id="sname">…</p><span id="smajor">AUIS</span></div>
+        <span style="margin-left:auto;color:rgba(255,255,255,.3);font-size:13px">↩</span>
+      </div>
+    </div>
   </div>
 
   <div id="main">
-    <div id="page-dashboard">
-      <h2 class="text-3xl font-bold mb-6">Community Resources</h2>
-      <div id="materials-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-    </div>
-
-    <div id="page-upload" class="hidden">
-      <h2 class="text-3xl font-bold mb-6">Share Resource</h2>
-      <div class="bg-white p-8 rounded-xl border max-w-lg">
-        <div class="mb-4">
-            <label class="block text-sm font-bold mb-2">Resource Title</label>
-            <input id="up-title" type="text" class="w-full p-3 border rounded" placeholder="e.g. IT201 Summary">
-        </div>
-        <div class="mb-6">
-            <label class="block text-sm font-bold mb-2">Select File</label>
-            <input id="up-file" type="file" class="w-full">
-        </div>
-        <button id="up-btn" onclick="uploadFile()" class="w-full bg-blue-900 text-white py-4 rounded-xl font-bold">Upload to Nexus Cloud</button>
+    <!-- Dashboard -->
+    <div id="pg-dashboard">
+      <div class="topbar">
+        <div><div class="pg-title" id="greet">Welcome back 👋</div><div class="pg-sub">Here's what's happening on Nexus today</div></div>
+        <button class="btn btn-p" onclick="go('upload')">⬆️ Upload Resource</button>
+      </div>
+      <div class="stats">
+        <div class="sc"><div class="si b">📄</div><div><div class="sv" id="st-tot">0</div><div class="sl">Total Resources</div></div></div>
+        <div class="sc"><div class="si g">⬇️</div><div><div class="sv" id="st-dl">0</div><div class="sl">Total Downloads</div></div></div>
+        <div class="sc"><div class="si a">📤</div><div><div class="sv" id="st-mine">0</div><div class="sl">My Uploads</div></div></div>
+        <div class="sc"><div class="si p">🔖</div><div><div class="sv" id="st-bk">0</div><div class="sl">Bookmarks</div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><h3>Recent Resources</h3><button class="btn btn-sm btn-o" onclick="go('hub')">View All →</button></div>
+        <div class="card-body"><div id="dash-grid" class="grid"></div></div>
       </div>
     </div>
 
-    <div id="page-chat" class="hidden">
-      <h2 class="text-3xl font-bold mb-4">AUIS Live Chat</h2>
-      <div class="bg-white border rounded-xl flex flex-col h-[500px]">
-        <div id="chat-messages" class="flex-1 p-6 overflow-y-auto"></div>
-        <div class="p-4 border-t flex gap-2">
-            <input id="chat-input" type="text" placeholder="Type message..." class="flex-1 p-3 border rounded-lg">
-            <button onclick="sendMsg()" class="bg-blue-900 text-white px-6 rounded-lg font-bold">Send</button>
+    <!-- Hub -->
+    <div id="pg-hub" class="hidden">
+      <div class="topbar"><div><div class="pg-title">Download Hub</div><div class="pg-sub">Browse resources from all departments</div></div></div>
+      <div class="frow">
+        <div class="sbox"><span class="si2">🔍</span><input id="hs" type="text" placeholder="Search…" oninput="dsearch()" /></div>
+        <select class="fsel" id="hm" onchange="loadHub()"><option value="">All Majors</option><option>IT</option><option>SE</option><option>CS</option><option>Business</option><option>English</option><option>Law</option><option>Other</option></select>
+        <select class="fsel" id="ht" onchange="loadHub()"><option value="">All Types</option><option>Lecture</option><option>Assignment</option><option>Book</option><option>Notes</option><option>Past Exam</option><option>Other</option></select>
+      </div>
+      <div id="hub-grid" class="grid"></div>
+      <div id="hub-pag" style="display:flex;justify-content:center;gap:7px;margin-top:20px"></div>
+    </div>
+
+    <!-- Upload -->
+    <div id="pg-upload" class="hidden">
+      <div class="topbar"><div><div class="pg-title">Upload Resource</div><div class="pg-sub">Share your study materials with AUIS students</div></div></div>
+      <div style="max-width:580px">
+        <div class="card"><div class="card-body">
+
+          <!-- UploadThing widget area -->
+          <div id="ut-area">
+            <div class="dz" id="dz" onclick="document.getElementById('fi').click()"
+                 ondragover="e=>{e.preventDefault();document.getElementById('dz').classList.add('over')}"
+                 ondrop="handleDrop(event)" ondragleave="document.getElementById('dz').classList.remove('over')">
+              <div style="font-size:34px;margin-bottom:8px" id="dico">📎</div>
+              <p><strong>Click to choose a file</strong> or drag & drop</p>
+              <p style="font-size:11px;margin-top:3px;color:#94a3b8">PDF, DOCX, PPTX, ZIP, Images — max 64MB</p>
+              <p id="dfn" style="font-size:12px;color:var(--navy);margin-top:6px;font-weight:600"></p>
+            </div>
+            <input type="file" id="fi" class="hidden" onchange="pickFile(this)" />
+            <div class="ubar" id="upbar">
+              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--slate);margin-bottom:3px">
+                <span id="ustat">Uploading to UploadThing…</span><span id="upct">0%</span>
+              </div>
+              <div class="pb"><div class="pf" id="pf"></div></div>
+            </div>
+          </div>
+
+          <div class="fg" style="margin-top:18px"><label class="fl">Title *</label>
+            <input id="utitle" class="fi" type="text" placeholder="e.g. ITE201 Midterm Notes" /></div>
+          <div class="fg"><label class="fl">Description</label>
+            <textarea id="udesc" class="fi" placeholder="Course, topic, semester…"></textarea></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="fg"><label class="fl">Type</label>
+              <select id="utype" class="fi"><option>Lecture</option><option>Assignment</option><option>Book</option><option>Notes</option><option>Past Exam</option><option>Other</option></select></div>
+            <div class="fg"><label class="fl">Major</label>
+              <select id="umajor" class="fi"><option>IT</option><option>SE</option><option>CS</option><option>Business</option><option>English</option><option>Law</option><option>Other</option></select></div>
+          </div>
+          <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px" onclick="doUpload()">⬆️ Upload Resource</button>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- My Uploads -->
+    <div id="pg-mine" class="hidden">
+      <div class="topbar"><div><div class="pg-title">My Uploads</div><div class="pg-sub">Manage your shared resources</div></div></div>
+      <div id="mine-grid" class="grid"></div>
+    </div>
+
+    <!-- Bookmarks -->
+    <div id="pg-bookmarks" class="hidden">
+      <div class="topbar"><div><div class="pg-title">Bookmarks</div><div class="pg-sub">Your saved resources</div></div></div>
+      <div id="bk-grid" class="grid"></div>
+    </div>
+
+    <!-- Chat -->
+    <div id="pg-chat" class="hidden">
+      <div class="topbar">
+        <div><div class="pg-title">Live Chat</div><div class="pg-sub">Real-time discussion with AUIS students</div></div>
+        <div class="ob" id="ob">● Online</div>
+      </div>
+      <div id="chat-wrap">
+        <div class="chat-box">
+          <div class="chat-hdr"><h3>💬 General Room</h3></div>
+          <div class="msgs" id="msgs"><div class="es"><div class="ei">💬</div><p>Loading messages…</p></div></div>
+          <div class="cin">
+            <input id="ci" type="text" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendMsg()" />
+            <button class="btn btn-p" onclick="sendMsg()">Send →</button>
+          </div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="mo" id="det-mo">
+  <div class="md wide">
+    <div class="md-hdr"><h2 id="det-title">Resource</h2><button class="xbtn" onclick="closeDet()">✕</button></div>
+    <div class="md-body">
+      <div id="det-meta" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px"></div>
+      <p id="det-desc" style="font-size:13px;color:var(--slate);line-height:1.6;margin-bottom:14px"></p>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:12px;background:var(--bg);border-radius:8px">
+        <div>
+          <div style="font-size:11px;color:var(--slate);margin-bottom:5px">Your Rating</div>
+          <div class="stars" id="det-stars">
+            <span class="star" onclick="rate(1)">★</span><span class="star" onclick="rate(2)">★</span>
+            <span class="star" onclick="rate(3)">★</span><span class="star" onclick="rate(4)">★</span>
+            <span class="star" onclick="rate(5)">★</span>
+          </div>
+        </div>
+        <div style="margin-left:auto;text-align:right">
+          <div id="det-avg" style="font-size:20px;font-weight:700;color:var(--navy)">—</div>
+          <div id="det-rc" style="font-size:11px;color:var(--slate)">No ratings yet</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:7px;margin-bottom:18px">
+        <button class="btn btn-p" style="flex:1;justify-content:center" onclick="dlItem()">⬇️ Download</button>
+        <button class="btn btn-o btn-ic" id="bk-btn" onclick="togBk()" title="Bookmark">🔖</button>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:14px">
+        <h4 style="font-size:13px;font-weight:600;margin-bottom:10px">Comments</h4>
+        <div id="det-cmts" style="margin-bottom:10px"></div>
+        <div style="display:flex;gap:7px">
+          <input id="cmt-in" class="fi" type="text" placeholder="Write a comment…" onkeydown="if(event.key==='Enter')postCmt()" style="flex:1" />
+          <button class="btn btn-p btn-sm" onclick="postCmt()">Post</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="mo" id="edit-mo">
+  <div class="md">
+    <div class="md-hdr"><h2>Edit Resource</h2><button class="xbtn" onclick="closeEdit()">✕</button></div>
+    <div class="md-body">
+      <div class="fg"><label class="fl">Title</label><input id="et" class="fi" type="text" /></div>
+      <div class="fg"><label class="fl">Description</label><textarea id="ed" class="fi"></textarea></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="fg"><label class="fl">Type</label><select id="ety" class="fi"><option>Lecture</option><option>Assignment</option><option>Book</option><option>Notes</option><option>Past Exam</option><option>Other</option></select></div>
+        <div class="fg"><label class="fl">Major</label><select id="em" class="fi"><option>IT</option><option>SE</option><option>CS</option><option>Business</option><option>English</option><option>Law</option><option>Other</option></select></div>
+      </div>
+      <button class="btn btn-p" style="width:100%;justify-content:center" onclick="saveEdit()">Save Changes</button>
     </div>
   </div>
 </div>
 
 <script>
-    const API_URL = window.location.origin;
-    let user = JSON.parse(localStorage.getItem('nexus_user'));
+// ═══════════════════════════════════════════════════════
+// CONFIG — update UPLOADTHING_APP_ID after you create app
+// ═══════════════════════════════════════════════════════
+const API = "";   // empty = same origin (Vercel serves both)
+const UT_ENDPOINT = "/api/uploadthing"; // UploadThing endpoint
 
-    // --- UTILS ---
-    function toast(m, t='success') {
-        const c = document.getElementById('toast-container');
-        const d = document.createElement('div');
-        d.className = `toast ${t}`;
-        d.innerText = m;
-        c.appendChild(d);
-        setTimeout(() => d.remove(), 3000);
-    }
+let token = localStorage.getItem("nt"), user = JSON.parse(localStorage.getItem("nu")||"null");
+let curMat = null, editId = null, hubPage = 1, stimer = null;
+let bks = new Set(), chatTimer = null, lastMsg = 0;
+let selFile = null, utFileUrl = null, utFileKey = null;
 
-    function switchTab(t) {
-        document.getElementById('login-form').classList.toggle('hidden', t==='register');
-        document.getElementById('register-form').classList.toggle('hidden', t==='login');
-    }
+// ═══ INIT ═══════════════════════════════════════════════
+(async()=>{ if(token&&user){ showApp(); go("dashboard"); startChat(); await loadBkIds(); } })();
 
-    function showPage(p) {
-        ['dashboard', 'upload', 'chat'].forEach(pg => document.getElementById(`page-${pg}`).classList.add('hidden'));
-        document.getElementById(`page-${p}`).classList.remove('hidden');
-        if(p === 'dashboard') loadMaterials();
-    }
+function showApp(){
+  document.getElementById("auth").style.display="none";
+  document.getElementById("app").classList.remove("hidden");
+  document.getElementById("sname").textContent=user.name;
+  document.getElementById("smajor").textContent=user.major||"AUIS";
+  document.getElementById("sava").textContent=user.name[0].toUpperCase();
+  document.getElementById("greet").textContent=`Welcome back, ${user.name.split(" ")[0]} 👋`;
+}
 
-    // --- AUTH ---
-    async function login() {
-        const email = document.getElementById('l-email').value;
-        const password = document.getElementById('l-pass').value;
-        const res = await fetch(`${API_URL}/api/auth/login`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({email, password})
-        });
-        const data = await res.json();
-        if(res.ok) {
-            localStorage.setItem('nexus_user', JSON.stringify(data));
-            location.reload();
-        } else toast(data.message, 'error');
-    }
+// ═══ AUTH ════════════════════════════════════════════════
+function switchTab(t){
+  document.querySelectorAll(".atab").forEach((el,i)=>el.classList.toggle("active",(i===0&&t==="login")||(i===1&&t==="register")));
+  document.getElementById("lf").classList.toggle("hidden",t!=="login");
+  document.getElementById("rf").classList.toggle("hidden",t!=="register");
+}
+async function login(){
+  const email=document.getElementById("le").value.trim(), pass=document.getElementById("lp").value;
+  if(!email||!pass) return toast("Fill all fields","bad");
+  try{ const d=await req("/api/auth/login","POST",{email,password:pass}); save(d); showApp(); go("dashboard"); startChat(); await loadBkIds(); toast("Welcome back, "+d.user.name+"! 🎉","ok"); }
+  catch(e){ toast(e.message,"bad"); }
+}
+async function register(){
+  const name=document.getElementById("rn").value.trim(),email=document.getElementById("re").value.trim(),
+        pass=document.getElementById("rp").value,major=document.getElementById("rm").value;
+  if(!name||!email||!pass) return toast("Fill all required fields","bad");
+  if(pass.length<6) return toast("Password min 6 chars","bad");
+  try{ const d=await req("/api/auth/register","POST",{name,email,password:pass,major}); save(d); showApp(); go("dashboard"); startChat(); await loadBkIds(); toast("Welcome, "+d.user.name+"! 🎉","ok"); }
+  catch(e){ toast(e.message,"bad"); }
+}
+function save(d){ token=d.token; user=d.user; localStorage.setItem("nt",token); localStorage.setItem("nu",JSON.stringify(user)); }
+function logout(){ token=null; user=null; localStorage.removeItem("nt"); localStorage.removeItem("nu"); clearInterval(chatTimer); document.getElementById("auth").style.display="flex"; document.getElementById("app").classList.add("hidden"); }
 
-    async function register() {
-        const name = document.getElementById('r-name').value;
-        const email = document.getElementById('r-email').value;
-        const password = document.getElementById('r-pass').value;
-        const major = document.getElementById('r-major').value;
-        const res = await fetch(`${API_URL}/api/auth/register`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({name, email, password, major})
-        });
-        if(res.ok) { toast("Registered! Now Login."); switchTab('login'); }
-    }
+// ═══ NAV ═════════════════════════════════════════════════
+function go(page){
+  document.querySelectorAll("[id^='pg-']").forEach(el=>el.classList.add("hidden"));
+  document.getElementById("pg-"+page).classList.remove("hidden");
+  document.querySelectorAll(".nav-i").forEach(el=>el.classList.remove("active"));
+  const map={dashboard:0,hub:1,upload:2,mine:3,bookmarks:4,chat:5};
+  document.querySelectorAll(".nav-i")[map[page]]?.classList.add("active");
+  if(page==="dashboard") loadDash();
+  else if(page==="hub"){ hubPage=1; loadHub(); }
+  else if(page==="mine") loadMine();
+  else if(page==="bookmarks") loadBk();
+  else if(page==="chat") loadChat();
+}
 
-    // --- UPLOADTHING LOGIC ---
-    async function uploadFile() {
-        const file = document.getElementById('up-file').files[0];
-        const title = document.getElementById('up-title').value;
-        const btn = document.getElementById('up-btn');
-        if(!file || !title) return toast("Missing title or file", "error");
+// ═══ API HELPER ══════════════════════════════════════════
+async function req(path,method="GET",body=null){
+  const opts={method,headers:{...(token?{Authorization:"Bearer "+token}:{})}};
+  if(body){ opts.headers["Content-Type"]="application/json"; opts.body=JSON.stringify(body); }
+  const r=await fetch(API+path,opts);
+  const d=await r.json();
+  if(!r.ok) throw new Error(d.error||"Request failed");
+  return d;
+}
 
-        btn.disabled = true; btn.innerText = "Connecting to Cloud...";
+// ═══ DASHBOARD ═══════════════════════════════════════════
+async function loadDash(){
+  try{
+    const [hub,mine,bkd]=await Promise.all([req("/api/materials?limit=6"),req("/api/materials/mine"),req("/api/bookmarks")]);
+    document.getElementById("st-tot").textContent=hub.total||0;
+    document.getElementById("st-mine").textContent=mine.materials?.length||0;
+    document.getElementById("st-bk").textContent=bkd.bookmarks?.length||0;
+    document.getElementById("st-dl").textContent=(hub.materials||[]).reduce((a,m)=>a+(m.downloadCount||0),0);
+    document.getElementById("dash-grid").innerHTML=(hub.materials||[]).map(mcard).join("")||es("No resources yet");
+  }catch(e){ console.error(e); }
+}
 
-        const fd = new FormData();
-        fd.append('file', file);
-        fd.append('title', title);
-        fd.append('major', user.major);
+// ═══ HUB ═════════════════════════════════════════════════
+async function loadHub(){
+  const s=document.getElementById("hs")?.value||"",maj=document.getElementById("hm")?.value||"",typ=document.getElementById("ht")?.value||"";
+  const g=document.getElementById("hub-grid");
+  g.innerHTML=`<div style="grid-column:1/-1;padding:40px;text-align:center"><div class="spin"></div></div>`;
+  try{
+    const p=new URLSearchParams({page:hubPage,limit:12});
+    if(s) p.append("search",s); if(maj) p.append("major",maj); if(typ) p.append("type",typ);
+    const d=await req("/api/materials?"+p);
+    g.innerHTML=(d.materials||[]).map(mcard).join("")||es("No resources found");
+    renderPag(d.pages);
+  }catch(e){ g.innerHTML=es("Failed to load resources"); }
+}
+function dsearch(){ clearTimeout(stimer); stimer=setTimeout(()=>{hubPage=1;loadHub();},400); }
+function renderPag(pages){
+  const el=document.getElementById("hub-pag"); if(!el||pages<=1){if(el)el.innerHTML="";return;}
+  el.innerHTML=Array.from({length:pages},(_,i)=>i+1)
+    .map(p=>`<button class="btn btn-sm ${p===hubPage?'btn-p':'btn-o'}" onclick="hubPage=${p};loadHub()">${p}</button>`).join("");
+}
 
-        try {
-            const res = await fetch(`${API_URL}/api/materials`, {
-                method: 'POST',
-                headers: {'Authorization': `Bearer ${user.token}`},
-                body: fd
-            });
-            if(res.ok) { toast("Uploaded Successfully!"); showPage('dashboard'); }
-            else toast("Upload Error", "error");
-        } catch(e) { toast("Server Error", "error"); }
-        finally { btn.disabled = false; btn.innerText = "Upload to Nexus Cloud"; }
-    }
-  
+// ═══ MATERIAL CARD ════════════════════════════════════════
+function mcard(m){
+  const avg=m.ratings?.length?(m.ratings.reduce((a,r)=>a+r.value,0)/m.ratings.length).toFixed(1):null;
+  const stars=avg?("★".repeat(Math.round(avg))+"☆".repeat(5-Math.round(avg))):"☆☆☆☆☆";
+  const isBk=bks.has(m._id);
+  return `<div class="mc">
+    <div class="mc-title" style="cursor:pointer" onclick="openDet('${m._id}')">${esc(m.title)}</div>
+    <div class="mc-desc">${esc(m.description||"No description provided.")}</div>
+    <div class="mc-meta">
+      <span class="badge bm">🎓 ${m.major||"General"}</span>
+      <span class="badge bt">📄 ${m.type||"Other"}</span>
+      <span class="badge bd">⬇️ ${m.downloadCount||0}</span>
+    </div>
+    <div class="mc-foot">
+      <div class="mc-by"><span style="color:var(--accent)">${stars}</span>${avg?` <span style="font-size:11px">${avg}</span>`:""} · ${esc(m.uploader?.name||"Unknown")}</div>
+      <div style="display:flex;gap:5px">
+        <button class="btn btn-sm ${isBk?'btn-p':'btn-o'} btn-ic" onclick="event.stopPropagation();qbk('${m._id}',this)" title="Bookmark">🔖</button>
+        <button class="btn btn-sm btn-p" onclick="event.stopPropagation();qdl('${m._id}','${esc(m.fileUrl||'')}','${esc(m.originalName||'file')}')">⬇️</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ═══ MY UPLOADS ══════════════════════════════════════════
+async function loadMine(){
+  const g=document.getElementById("mine-grid"); g.innerHTML=es("Loading…");
+  try{
+    const d=await req("/api/materials/mine");
+    g.innerHTML=(d.materials||[]).map(m=>`<div class="mc">
+      <div class="mc-title">${esc(m.title)}</div>
+      <div class="mc-desc">${esc(m.description||"No description.")}</div>
+      <div class="mc-meta"><span class="badge bm">🎓 ${m.major}</span><span class="badge bt">📄 ${m.type}</span><span class="badge bd">⬇️ ${m.downloadCount||0}</span></div>
+      <div class="mc-foot">
+        <div class="mc-by">${new Date(m.createdAt).toLocaleDateString()}</div>
+        <div style="display:flex;gap:5px">
+          <button class="btn btn-sm btn-o" onclick="openEdit('${m._id}','${esc(m.title)}','${esc(m.description||"")}','${m.type}','${m.major}')">✏️</button>
+          <button class="btn btn-sm btn-d" onclick="delMat('${m._id}')">🗑️</button>
+        </div>
+      </div>
+    </div>`).join("")||es("You haven't uploaded anything yet");
+  }catch(e){ g.innerHTML=es("Failed to load"); }
+}
+async function delMat(id){ if(!confirm("Delete this resource?")) return; try{ await req("/api/materials/"+id,"DELETE"); toast("Deleted","ok"); loadMine(); }catch(e){ toast(e.message,"bad"); } }
+function openEdit(id,title,desc,type,major){
+  editId=id;
+  document.getElementById("et").value=title;
+  document.getElementById("ed").value=desc;
+  document.getElementById("ety").value=type;
+  document.getElementById("em").value=major;
+  document.getElementById("edit-mo").classList.add("open");
+}
+function closeEdit(){ document.getElementById("edit-mo").classList.remove("open"); }
+async function saveEdit(){
+  const title=document.getElementById("et").value.trim();
+  if(!title) return toast("Title required","bad");
+  try{ await req("/api/materials/"+editId,"PUT",{title,description:document.getElementById("ed").value,type:document.getElementById("ety").value,major:document.getElementById("em").value}); closeEdit(); toast("Updated!","ok"); loadMine(); }
+  catch(e){ toast(e.message,"bad"); }
+}
+
+// ═══ BOOKMARKS ═══════════════════════════════════════════
+async function loadBkIds(){ try{ const d=await req("/api/bookmarks"); bks=new Set((d.bookmarks||[]).map(b=>b._id||b)); }catch{} }
+async function loadBk(){
+  const g=document.getElementById("bk-grid"); g.innerHTML=es("Loading…");
+  try{ const d=await req("/api/bookmarks"); g.innerHTML=(d.bookmarks||[]).map(mcard).join("")||es("No bookmarks yet"); }
+  catch(e){ g.innerHTML=es("Failed to load"); }
+}
+async function qbk(id,btn){
+  try{
+    await req("/api/bookmarks/"+id,"POST");
+    if(bks.has(id)){ bks.delete(id); btn.className="btn btn-sm btn-o btn-ic"; }
+    else{ bks.add(id); btn.className="btn btn-sm btn-p btn-ic"; }
+  }catch(e){ toast(e.message,"bad"); }
+}
+
+// ═══ UPLOAD (UploadThing) ════════════════════════════════
+// UploadThing works by: 1) client requests presigned URL from your /api/uploadthing endpoint
+// 2) client uploads directly to UploadThing CDN
+// 3) UploadThing calls your webhook with the file URL
+// 4) We save metadata to MongoDB
+
+function pickFile(input){ if(input.files[0]) setF(input.files[0]); }
+function handleDrop(e){ e.preventDefault(); document.getElementById("dz").classList.remove("over"); const f=e.dataTransfer.files[0]; if(f) setF(f); }
+function setF(f){ selFile=f; utFileUrl=null; utFileKey=null; document.getElementById("dico").textContent="📄"; document.getElementById("dfn").textContent=f.name+" ("+(f.size/1024/1024).toFixed(2)+" MB)"; }
+
+async function doUpload(){
+  const title=document.getElementById("utitle").value.trim();
+  if(!selFile) return toast("Please select a file first","bad");
+  if(!title) return toast("Please enter a title","bad");
+
+  // Step 1: Get UploadThing presigned URL
+  const upbar=document.getElementById("upbar"), pf=document.getElementById("pf"), upct=document.getElementById("upct"), ustat=document.getElementById("ustat");
+  upbar.style.display="block"; ustat.textContent="Getting upload URL…"; pf.style.width="10%"; upct.textContent="10%";
+
+  try{
+    // Request presigned URL from our UploadThing serverless function
+    const presign=await req("/api/uploadthing","POST",{
+      fileName: selFile.name,
+      fileType: selFile.type,
+      fileSize: selFile.size
+    });
+
+    ustat.textContent="Uploading file…"; pf.style.width="30%"; upct.textContent="30%";
+
+    // Upload directly to UploadThing CDN using XHR for progress
+    await new Promise((resolve,reject)=>{
+      const xhr=new XMLHttpRequest();
+      xhr.open("PUT", presign.url);
+      xhr.setRequestHeader("Content-Type", selFile.type);
+      xhr.upload.onprogress=(e)=>{
+        if(e.lengthComputable){
+          const p=30+Math.round((e.loaded/e.total)*60);
+          pf.style.width=p+"%"; upct.textContent=p+"%";
+        }
+      };
+      xhr.onload=()=>{ if(xhr.status<300) resolve(); else reject(new Error("Upload failed: "+xhr.status)); };
+      xhr.onerror=()=>reject(new Error("Upload failed"));
+      xhr.send(selFile);
+    });
+
+    ustat.textContent="Saving to database…"; pf.style.width="95%"; upct.textContent="95%";
+
+    // Save metadata to MongoDB
+    await req("/api/materials","POST",{
+      title,
+      description: document.getElementById("udesc").value,
+      type: document.getElementById("utype").value,
+      major: document.getElementById("umajor").value,
+      fileUrl: presign.fileUrl,
+      fileKey: presign.fileKey,
+      originalName: selFile.name,
+      size: selFile.size
+    });
+
+    pf.style.width="100%"; upct.textContent="100%";
+    setTimeout(()=>{ upbar.style.display="none"; pf.style.width="0%"; },500);
+
+    toast("Uploaded successfully! 🎉","ok");
+    selFile=null;
+    document.getElementById("dico").textContent="📎";
+    document.getElementById("dfn").textContent="";
+    document.getElementById("utitle").value="";
+    document.getElementById("udesc").value="";
+    document.getElementById("fi").value="";
+    go("mine");
+  }catch(e){ upbar.style.display="none"; pf.style.width="0%"; toast(e.message,"bad"); }
+}
+
+// ═══ DETAIL MODAL ════════════════════════════════════════
+async function openDet(id){
+  try{
+    const d=await req("/api/materials?limit=200");
+    curMat=(d.materials||[]).find(m=>m._id===id);
+    if(!curMat) return;
+    document.getElementById("det-title").textContent=curMat.title;
+    document.getElementById("det-desc").textContent=curMat.description||"No description.";
+    document.getElementById("det-meta").innerHTML=`
+      <span class="badge bm">🎓 ${curMat.major}</span>
+      <span class="badge bt">📄 ${curMat.type}</span>
+      <span class="badge bd">⬇️ ${curMat.downloadCount||0} downloads</span>
+      <span class="badge" style="background:#f1f5f9;color:var(--slate)">👤 ${esc(curMat.uploader?.name||"Unknown")}</span>`;
+    const avg=curMat.ratings?.length?(curMat.ratings.reduce((a,r)=>a+r.value,0)/curMat.ratings.length):null;
+    document.getElementById("det-avg").textContent=avg?avg.toFixed(1)+" ★":"—";
+    document.getElementById("det-rc").textContent=curMat.ratings?.length?`${curMat.ratings.length} rating${curMat.ratings.length>1?"s":""}` :"No ratings yet";
+    updStars(curMat.ratings?.find(r=>r.user===user?.id||r.user===user?._id)?.value||0);
+    const bkBtn=document.getElementById("bk-btn");
+    bkBtn.textContent=bks.has(id)?"🔖 Saved":"🔖";
+    bkBtn.className=bks.has(id)?"btn btn-p btn-ic":"btn btn-o btn-ic";
+    renderCmts(curMat.comments||[]);
+    document.getElementById("det-mo").classList.add("open");
+  }catch(e){ toast("Failed to load resource","bad"); }
+}
+function closeDet(){ document.getElementById("det-mo").classList.remove("open"); }
+function updStars(n){ document.querySelectorAll("#det-stars .star").forEach((s,i)=>s.classList.toggle("on",i<n)); }
+async function rate(v){
+  if(!curMat) return; updStars(v);
+  try{
+    const d=await req("/api/materials/"+curMat._id+"/rate","POST",{value:v});
+    document.getElementById("det-avg").textContent=d.averageRating+" ★";
+    document.getElementById("det-rc").textContent=`${d.totalRatings} rating${d.totalRatings>1?"s":""}`;
+    toast("Rating saved!","ok");
+  }catch(e){ toast(e.message,"bad"); }
+}
+async function togBk(){
+  if(!curMat) return;
+  try{
+    await req("/api/bookmarks/"+curMat._id,"POST");
+    const id=curMat._id, bkBtn=document.getElementById("bk-btn");
+    if(bks.has(id)){ bks.delete(id); bkBtn.textContent="🔖"; bkBtn.className="btn btn-o btn-ic"; toast("Bookmark removed","info"); }
+    else{ bks.add(id); bkBtn.textContent="🔖 Saved"; bkBtn.className="btn btn-p btn-ic"; toast("Bookmarked! 🔖","ok"); }
+  }catch(e){ toast(e.message,"bad"); }
+}
+function qdl(id,fileUrl,name){
+  req("/api/materials/"+id+"/download","POST").catch(()=>{});
+  const a=document.createElement("a"); a.href=fileUrl; a.download=name; a.target="_blank"; a.click();
+  toast("Download started ⬇️","info");
+}
+function dlItem(){ if(curMat) qdl(curMat._id, curMat.fileUrl, curMat.originalName); }
+function renderCmts(cmts){
+  const el=document.getElementById("det-cmts");
+  if(!cmts.length){ el.innerHTML=`<p style="font-size:12px;color:var(--slate)">No comments yet. Be the first!</p>`; return; }
+  const roots=cmts.filter(c=>!c.parent), reps=cmts.filter(c=>c.parent);
+  el.innerHTML=roots.map(c=>`<div class="cmt">
+    <div style="display:flex;justify-content:space-between"><span class="chu">${esc(c.userName||"Unknown")}</span><span style="font-size:11px;color:var(--slate-l)">${new Date(c.createdAt).toLocaleDateString()}</span></div>
+    <div class="cht">${esc(c.text)}</div>
+    ${reps.filter(r=>r.parent?.toString()===c._id?.toString()).map(r=>`<div class="rep"><div style="display:flex;justify-content:space-between"><span class="chu">${esc(r.userName||"Unknown")}</span><span style="font-size:11px;color:var(--slate-l)">${new Date(r.createdAt).toLocaleDateString()}</span></div><div class="cht">${esc(r.text)}</div></div>`).join("")}
+  </div>`).join("");
+}
+async function postCmt(){
+  const text=document.getElementById("cmt-in").value.trim();
+  if(!text||!curMat) return;
+  try{ const d=await req("/api/materials/"+curMat._id+"/comments","POST",{text}); document.getElementById("cmt-in").value=""; renderCmts(d.comments||[]); toast("Comment posted!","ok"); }
+  catch(e){ toast(e.message,"bad"); }
+}
+
+// ═══ CHAT (polling — Vercel compatible) ══════════════════
+async function loadChat(){
+  lastMsg=0;
+  const msgs=document.getElementById("msgs");
+  msgs.innerHTML=`<div style="text-align:center;padding:30px"><div class="spin"></div></div>`;
+  try{
+    const d=await req("/api/chat?room=general");
+    msgs.innerHTML="";
+    (d.messages||[]).forEach(appendMsg);
+    if(d.messages?.length) lastMsg=new Date(d.messages[d.messages.length-1].createdAt).getTime();
+  }catch(e){ msgs.innerHTML=es("Failed to load chat"); }
+}
+function startChat(){
+  clearInterval(chatTimer);
+  chatTimer=setInterval(async()=>{
+    if(document.getElementById("pg-chat").classList.contains("hidden")) return;
+    try{
+      const d=await req("/api/chat?room=general&after="+lastMsg);
+      if(d.messages?.length){
+        d.messages.forEach(appendMsg);
+        lastMsg=new Date(d.messages[d.messages.length-1].createdAt).getTime();
+      }
+    }catch{}
+  },2500); // poll every 2.5 seconds
+}
+function appendMsg(msg){
+  const el=document.getElementById("msgs");
+  const empty=el.querySelector(".es"); if(empty) el.innerHTML="";
+  const me=msg.userName===user?.name;
+  const div=document.createElement("div"); div.className="mb"+(me?" me":"");
+  div.innerHTML=`<div class="ma">${msg.userName?msg.userName[0].toUpperCase():"?"}</div>
+    <div class="mc2">
+      <div class="mm">${me?"You":esc(msg.userName)} · ${msg.major||""} · ${new Date(msg.createdAt).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</div>
+      <div class="mt2">${esc(msg.text)}</div>
+    </div>`;
+  el.appendChild(div); el.scrollTop=el.scrollHeight;
+}
+async function sendMsg(){
+  const inp=document.getElementById("ci"), text=inp.value.trim(); if(!text) return;
+  inp.value="";
+  try{
+    const d=await req("/api/chat","POST",{text,room:"general"});
+    appendMsg(d.message);
+    lastMsg=new Date(d.message.createdAt).getTime();
+  }catch(e){ toast(e.message,"bad"); }
+}
+
+// ═══ TOASTS ══════════════════════════════════════════════
+function toast(msg,type="info"){
+  const icons={ok:"✅",bad:"❌",info:"ℹ️"};
+  const el=document.createElement("div"); el.className="toast "+type;
+  el.innerHTML=`<span>${icons[type]||"ℹ️"}</span><span>${esc(msg)}</span>`;
+  document.getElementById("tc").appendChild(el);
+  setTimeout(()=>{ el.style.animation="fout .3s ease forwards"; setTimeout(()=>el.remove(),300); },3200);
+}
+
+// ═══ HELPERS ═════════════════════════════════════════════
+function es(msg){ return `<div class="es" style="grid-column:1/-1"><div class="ei">📭</div><p>${msg}</p></div>`; }
+function esc(s){ return s?String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"):""; }
+</script>
+</body>
+</html>
